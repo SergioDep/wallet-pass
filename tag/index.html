@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0b0507">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>✦</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0507;
+    --ink: #fff3f1;
+    --muted: #f3b8b3;
+    --red: #e11d2e;
+    --red-deep: #7f0d18;
+    --gold: #ffcf6b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); color: var(--ink); overflow: hidden; }
+  body {
+    font-family: "Bricolage Grotesque", system-ui, -apple-system, sans-serif;
+    -webkit-user-select: none; user-select: none; touch-action: manipulation;
+  }
+  .screen {
+    position: fixed; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 28px;
+    padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+    text-align: center; transition: opacity .5s ease, transform .5s ease;
+  }
+  .hidden { opacity: 0; pointer-events: none; transform: scale(1.04); }
+
+  /* Reveal */
+  #reveal { background: radial-gradient(60% 45% at 50% 50%, rgba(225,29,46,.28), transparent 70%), var(--bg); cursor: pointer; }
+  .orb { position: relative; width: 168px; height: 168px; }
+  .orb .core {
+    position: absolute; inset: 34px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ff8a8a, var(--red) 45%, var(--red-deep) 100%);
+    box-shadow: 0 0 60px rgba(225,29,46,.6), inset 0 -10px 30px rgba(0,0,0,.35);
+    animation: beat 1.1s ease-in-out infinite;
+  }
+  .orb .ring {
+    position: absolute; inset: 0; border-radius: 50%;
+    border: 2px solid rgba(255,140,140,.55); opacity: 0;
+    animation: ripple 2.4s ease-out infinite;
+  }
+  .orb .ring:nth-child(2) { animation-delay: .8s; }
+  .orb .ring:nth-child(3) { animation-delay: 1.6s; }
+  @keyframes beat { 0%,100% { transform: scale(1); } 12% { transform: scale(1.09); } 28% { transform: scale(1.02); } 40% { transform: scale(1.06); } }
+  @keyframes ripple { 0% { transform: scale(.45); opacity: .9; } 100% { transform: scale(1.35); opacity: 0; } }
+  .kicker { font-size: 13px; letter-spacing: .28em; text-transform: uppercase; color: var(--muted); }
+  .tap { font-size: clamp(30px, 9vw, 44px); font-weight: 800; line-height: 1.05; letter-spacing: -.02em; }
+
+  /* Show */
+  #show { pointer-events: none; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
+  .big {
+    font-size: clamp(64px, 22vw, 140px); font-weight: 800; letter-spacing: -.04em; line-height: .9;
+    background: linear-gradient(180deg, #fff, var(--gold) 55%, #ff7a59);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 6px 30px rgba(225,29,46,.55));
+    transform: scale(.6); opacity: 0; transition: transform .9s cubic-bezier(.2,1.6,.4,1), opacity .4s;
+  }
+  .sub { font-size: 18px; color: var(--muted); opacity: 0; transform: translateY(10px); transition: all .6s .5s; max-width: 22ch; }
+  .tilt { font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,243,241,.45); opacity: 0; transition: opacity .6s 1.6s; }
+  #show.on .big { transform: scale(1); opacity: 1; }
+  #show.on .sub, #show.on .tilt { opacity: 1; transform: none; }
+
+  /* Done (after AR / Wallet handoff) */
+  #done { background: radial-gradient(70% 50% at 50% 40%, rgba(225,29,46,.18), transparent 70%), var(--bg); }
+  .emoji { font-size: 72px; line-height: 1; }
+  .msg { font-size: clamp(26px, 7.5vw, 36px); font-weight: 800; letter-spacing: -.02em; max-width: 16ch; line-height: 1.1; }
+  .hint { color: var(--muted); font-size: 16px; max-width: 28ch; line-height: 1.4; }
+
+  .actions { position: fixed; left: 0; right: 0; bottom: max(28px, env(safe-area-inset-bottom)); display: flex; gap: 10px; justify-content: center; padding: 0 16px; pointer-events: auto; }
+  .btn {
+    appearance: none; border: 0; font: inherit; font-weight: 800; font-size: 16px;
+    padding: 14px 22px; border-radius: 999px; cursor: pointer;
+    background: var(--ink); color: var(--bg);
+  }
+  .btn.ghost { background: rgba(255,243,241,.1); color: var(--ink); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .btn:active { transform: scale(.97); }
+
+  #haptic { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; overflow: hidden; }
+  @media (prefers-reduced-motion: reduce) { .orb .core, .orb .ring { animation: none; } .orb .ring { opacity: .4; } }
+</style>
+</head>
+<body>
+
+<section id="reveal" class="screen" role="button" aria-label="Toca para descubrir">
+  <div class="orb"><div class="ring"></div><div class="ring"></div><div class="ring"></div><div class="core"></div></div>
+  <div>
+    <p class="kicker">Hay algo para ti</p>
+    <p class="tap" style="margin-top:10px">Toca para<br>descubrir</p>
+  </div>
+</section>
+
+<section id="show" class="screen hidden">
+  <canvas id="fx"></canvas>
+  <h1 class="big" id="title"></h1>
+  <p class="sub" id="subtitle"></p>
+  <p class="tilt" id="tiltHint">Inclina el teléfono</p>
+</section>
+
+<section id="done" class="screen hidden">
+  <div class="emoji" id="doneEmoji"></div>
+  <p class="msg" id="doneMsg"></p>
+  <p class="hint" id="doneHint"></p>
+</section>
+
+<div class="actions hidden" id="actions">
+  <button class="btn ghost" id="again" hidden>Abrir de nuevo</button>
+  <button class="btn" id="another">Otra sorpresa</button>
+</div>
+
+<a id="arLink" rel="ar" href="#" hidden><img alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACw="></a>
+<label id="haptic"><input type="checkbox" switch></label>
+
+<script>
+(() => {
+  const DEFAULTS = {
+    mode: "random", fixed: "show", experiences: ["ar", "wallet", "show"],
+    message: { title: "¡Hola!", subtitle: "Esto salió de una etiqueta NFC" },
+    pass: "../card.pkpass", model: "heart.usdz"
+  };
+  let cfg = DEFAULTS;
+  const $ = (id) => document.getElementById(id);
+
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch {} }
+  };
+
+  const ua = navigator.userAgent;
+  const isAppleTouch = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  const isApple = isAppleTouch || /Macintosh/.test(ua);
+  const supportsAR = (() => { try { return document.createElement("a").relList.supports("ar"); } catch { return false; } })();
+
+  const can = {
+    ar: () => supportsAR,
+    wallet: () => isApple,
+    show: () => true
+  };
+
+  const configReady = fetch("config.json", { cache: "no-store" })
+    .then((r) => r.ok ? r.json() : {})
+    .then((j) => { cfg = { ...DEFAULTS, ...j, message: { ...DEFAULTS.message, ...(j.message || {}) } }; })
+    .catch(() => {});
+
+  function pick(exclude) {
+    const forced = new URLSearchParams(location.search).get("x");
+    if (forced && !exclude && can[forced]?.()) return forced;
+    const pool = (cfg.experiences || []).filter((x) => can[x]?.());
+    if (!pool.length) return "show";
+    if (!exclude && cfg.mode === "fixed" && pool.includes(cfg.fixed)) return cfg.fixed;
+    if (!exclude && cfg.mode === "cycle") {
+      const i = (parseInt(store.get("tag:i") || "-1", 10) + 1) % pool.length;
+      store.set("tag:i", String(i));
+      return pool[i];
+    }
+    const last = exclude || store.get("tag:last");
+    const options = pool.length > 1 ? pool.filter((x) => x !== last) : pool;
+    return options[Math.floor(Math.random() * options.length)];
+  }
+
+  // ---------- sound + haptics ----------
+  let ac;
+  function audio() {
+    if (!ac) {
+      try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch {}
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) ac = new AC();
+    }
+    if (ac && ac.state === "suspended") ac.resume();
+    return ac;
+  }
+  function chime() {
+    const a = audio(); if (!a) return;
+    const notes = [523.25, 659.25, 783.99, 1046.5, 1318.5];
+    notes.forEach((f, i) => {
+      const t = a.currentTime + i * 0.08;
+      const o = a.createOscillator(), g = a.createGain();
+      o.type = "triangle"; o.frequency.value = f;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.18, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
+      o.connect(g).connect(a.destination); o.start(t); o.stop(t + 1.3);
+    });
+  }
+  let noiseBuf;
+  function pop() {
+    const a = ac; if (!a) return;
+    if (!noiseBuf) {
+      noiseBuf = a.createBuffer(1, a.sampleRate * 0.6, a.sampleRate);
+      const d = noiseBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
+    }
+    const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+    s.buffer = noiseBuf; f.type = "lowpass"; f.frequency.value = 900 + Math.random() * 1400;
+    g.gain.value = 0.25 + Math.random() * 0.2;
+    s.connect(f).connect(g).connect(a.destination); s.start();
+  }
+  function buzz() {
+    try { if (navigator.vibrate) { navigator.vibrate(30); return; } $("haptic").click(); } catch {}
+  }
+
+  // ---------- screens ----------
+  function show(id) {
+    for (const s of ["reveal", "show", "done"]) $(s).classList.toggle("hidden", s !== id);
+  }
+  function actions(again) {
+    $("again").hidden = !again;
+    $("actions").classList.remove("hidden");
+  }
+
+  // ---------- experiences ----------
+  const run = {
+    ar() {
+      const a = $("arLink"); a.href = cfg.model; a.click();
+      done("❤️", "Mira a tu alrededor", "Mueve el teléfono para ver el corazón en tu espacio. Si no se abrió, toca «Abrir de nuevo».");
+      $("again").onclick = () => { buzz(); a.click(); };
+      actions(true);
+    },
+    wallet() {
+      location.href = cfg.pass;
+      done("🎟️", "Una tarjeta para tu Wallet", "Toca «Añadir» para guardarla. Si no apareció, toca «Abrir de nuevo».");
+      $("again").onclick = () => { buzz(); location.href = cfg.pass; };
+      actions(true);
+    },
+    show() {
+      $("title").textContent = cfg.message.title;
+      $("subtitle").textContent = cfg.message.subtitle;
+      show("show");
+      requestAnimationFrame(() => $("show").classList.add("on"));
+      chime();
+      startFireworks();
+      enableTilt();
+      setTimeout(() => actions(false), 2200);
+    }
+  };
+  function done(emoji, msg, hint) {
+    $("doneEmoji").textContent = emoji; $("doneMsg").textContent = msg; $("doneHint").textContent = hint;
+    show("done");
+  }
+
+  function launch(exp) {
+    store.set("tag:last", exp);
+    stopFireworks();
+    $("show").classList.remove("on");
+    $("actions").classList.add("hidden");
+    run[exp]();
+  }
+
+  // ---------- fireworks ----------
+  const cv = $("fx"), ctx = cv.getContext("2d");
+  let W, H, dpr, parts = [], raf = 0, timer = 0, grav = { x: 0, y: 0.06 };
+  const palette = ["#ff3b4e", "#ffcf6b", "#ff8a8a", "#ffffff", "#ff7a59", "#e11d2e"];
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.width = innerWidth * dpr; H = cv.height = innerHeight * dpr;
+  }
+  addEventListener("resize", resize); resize();
+  function burst(x, y) {
+    const n = 70 + Math.random() * 40, c = palette[Math.floor(Math.random() * palette.length)];
+    const heart = Math.random() < 0.35;
+    for (let i = 0; i < n; i++) {
+      const t = (i / n) * Math.PI * 2;
+      let vx, vy;
+      if (heart) { // parametric heart outline
+        vx = 16 * Math.pow(Math.sin(t), 3) / 16;
+        vy = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) / 16;
+        const s = 5.2 * dpr; vx *= s; vy *= s;
+      } else {
+        const sp = (2 + Math.random() * 5) * dpr; vx = Math.cos(t) * sp; vy = Math.sin(t) * sp;
+      }
+      parts.push({ x, y, vx, vy, life: 1, decay: 0.008 + Math.random() * 0.01, c: Math.random() < 0.15 ? "#fff" : c, r: (1.4 + Math.random() * 1.6) * dpr });
+    }
+    pop(); buzz();
+  }
+  function loop() {
+    ctx.globalCompositeOperation = "source-over";
+    ctx.fillStyle = "rgba(11,5,7,0.22)"; ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = "lighter";
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const p = parts[i];
+      p.vx = p.vx * 0.985 + grav.x * dpr; p.vy = p.vy * 0.985 + grav.y * dpr;
+      p.x += p.vx; p.y += p.vy; p.life -= p.decay;
+      if (p.life <= 0) { parts.splice(i, 1); continue; }
+      ctx.globalAlpha = Math.max(p.life, 0);
+      ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    raf = requestAnimationFrame(loop);
+  }
+  function startFireworks() {
+    stopFireworks(); parts = [];
+    ctx.fillStyle = "#0b0507"; ctx.fillRect(0, 0, W, H);
+    loop();
+    burst(W / 2, H * 0.42);
+    let k = 0;
+    timer = setInterval(() => {
+      burst(W * (0.15 + Math.random() * 0.7), H * (0.15 + Math.random() * 0.45));
+      if (++k > 40) clearInterval(timer);
+    }, 650);
+  }
+  function stopFireworks() { cancelAnimationFrame(raf); clearInterval(timer); }
+
+  function onTilt(e) {
+    if (e.gamma == null) return;
+    grav.x = Math.max(-1, Math.min(1, e.gamma / 45)) * 0.12;
+    grav.y = Math.max(-1, Math.min(1, (e.beta - 30) / 45)) * 0.12 + 0.02;
+  }
+  function enableTilt() {
+    const D = window.DeviceOrientationEvent;
+    if (!D) { $("tiltHint").hidden = true; return; }
+    if (typeof D.requestPermission === "function") {
+      D.requestPermission().then((s) => {
+        if (s === "granted") addEventListener("deviceorientation", onTilt); else $("tiltHint").hidden = true;
+      }).catch(() => { $("tiltHint").hidden = true; });
+    } else {
+      addEventListener("deviceorientation", onTilt);
+    }
+  }
+
+  // ---------- wiring ----------
+  // Kept synchronous: AR, Wallet and motion permission all need the live tap gesture.
+  // config.json is tiny and is normally loaded long before anyone taps; defaults cover the rest.
+  $("reveal").addEventListener("click", () => {
+    audio(); buzz();
+    launch(pick());
+  }, { once: true });
+  $("another").addEventListener("click", () => {
+    audio(); buzz();
+    launch(pick(store.get("tag:last")));
+  });
+})();
+</script>
+</body>
+</html>

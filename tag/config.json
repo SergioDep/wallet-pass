@@ -1,0 +1,11 @@
+{
+  "mode": "random",
+  "fixed": "show",
+  "experiences": ["ar", "wallet", "show"],
+  "message": {
+    "title": "¡Hola!",
+    "subtitle": "Esto salió de una etiqueta NFC"
+  },
+  "pass": "../card.pkpass",
+  "model": "heart.usdz"
+}
