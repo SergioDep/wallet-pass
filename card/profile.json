@@ -1,0 +1,13 @@
+{
+  "_note": "DEMO values. Edit, then run: python3 tools/build_card.py",
+  "firstName": "Sergio",
+  "lastName": "",
+  "title": "Computer Engineer",
+  "location": "Lima · PE",
+  "phone": "+51900010069",
+  "whatsapp": "51900010069",
+  "email": "hola@example.com",
+  "linkedin": "https://www.linkedin.com/in/your-handle",
+  "github": "https://github.com/SergioDep",
+  "url": "https://sergiodep.github.io/wallet-pass/card/"
+}
